@@ -54,6 +54,7 @@ func main() {
 	}()
 
 	// Read email files
+	fmt.Printf("Indexing emails in %s...\n", rootFolder)
 	startTime := time.Now()
 	emails, err := email.LoadEmails(rootFolder)
 	duration := time.Since(startTime)
@@ -65,7 +66,7 @@ func main() {
 
 	// log.Printf("Email example: \n%s\n", emails[0].String())
 
-	// Measure the time taken to send the emails to the bulkv2 API
+	fmt.Println("Posting emails to the database...")
 	startTime = time.Now()
 	err = email.PostEmails(emails)
 	duration = time.Since(startTime)
@@ -73,6 +74,6 @@ func main() {
 		fmt.Printf("Error sending emails to bulkv2 API: %v\n", err)
 		return
 	}
-	fmt.Printf("Emails sent to bulkv2 API in %v.\n", duration)
+	fmt.Printf("Emails sent to Zincsearch database in %v.\n", duration)
 
 }
