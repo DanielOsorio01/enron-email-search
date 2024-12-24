@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"time"
+
+	"github.com/DanielOsorio01/enron-email-search/load-data/email"
 )
 
 func main() {
@@ -52,7 +54,7 @@ func main() {
 
 	// Read email files
 	startTime := time.Now()
-	emails, err := readEmails(rootFolder)
+	emails, err := email.LoadEmails(rootFolder)
 	duration := time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error indexing emails: %v\n", err)
@@ -64,7 +66,7 @@ func main() {
 
 	// Measure the time taken to send the emails to the bulkv2 API
 	startTime = time.Now()
-	err = postEmails(emails)
+	err = email.PostEmails(emails)
 	duration = time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error sending emails to bulkv2 API: %v\n", err)

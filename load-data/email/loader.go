@@ -8,7 +8,7 @@ import (
 )
 
 // IndexEmails processes all files in the directory tree using Depth-First Search.
-func readEmails(root string) ([]Email, error) {
+func LoadEmails(root string) ([]Email, error) {
 	var emails []Email
 	var mu sync.Mutex
 	var wg sync.WaitGroup

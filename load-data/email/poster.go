@@ -14,7 +14,7 @@ type BulkV2Data struct {
 	Records []Email `json:"records"`
 }
 
-func postEmails(emails []Email) error {
+func PostEmails(emails []Email) error {
 	var wg sync.WaitGroup
 	concurrencyLimit := 2
 
