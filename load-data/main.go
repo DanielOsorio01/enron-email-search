@@ -22,6 +22,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// read the folder name from the first argument
+	rootFolder := os.Args[1]
+
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var memprofile = flag.String("memprofile", "", "write memory profile to file")
 
@@ -49,8 +52,6 @@ func main() {
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
-	// Define the root folder to start DFS
-	rootFolder := "enron_mail_2011_04_02/maildir" // Change this to your desired folder
 
 	// Read email files
 	startTime := time.Now()

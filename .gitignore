@@ -1,4 +1,4 @@
 indexer
 .env
 
-enron_mail_2011_04_02/
+load-data/enron_mail_2011_04_02/
