@@ -1,4 +1,6 @@
 indexer
 .env
-
+load-data/cpu.prof
+load-data/mem.prof
+load-data/main
 load-data/enron_mail_2011_04_02/

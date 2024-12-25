@@ -28,8 +28,15 @@ func main() {
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var memprofile = flag.String("memprofile", "", "write memory profile to file")
 
-	flag.Parse()
+	flag.CommandLine.Parse(os.Args[2:]) // Parse only the flags
+
+	// Debugging: Print parsed values
+	fmt.Println("Root folder:", rootFolder)
+	fmt.Println("cpuprofile flag value:", *cpuprofile)
+	fmt.Println("memprofile flag value:", *memprofile)
+
 	if *cpuprofile != "" {
+		fmt.Println("Starting CPU profiling...")
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
 			log.Fatal(err)
@@ -39,15 +46,19 @@ func main() {
 	}
 	// Start memory profiling if the flag is set
 	if *memprofile != "" {
+		fmt.Println("Starting memory profiling...")
 		f, err := os.Create(*memprofile)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer f.Close()
-		runtime.GC() // Force a garbage collection to get accurate stats
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
+		defer func() {
+			runtime.GC() // Force garbage collection to capture all data
+			if err := pprof.WriteHeapProfile(f); err != nil {
+				log.Fatal("could not write memory profile:", err)
+			}
+			f.Close()
+			fmt.Println("Memory profiling complete.")
+		}()
 	}
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
