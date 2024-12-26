@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	app := app.New()
+	app := app.New(*app.LoadConfig())
 
 	// Define a context that will be canceled when a SIGINT is sent
 	// to have graceful shutdown

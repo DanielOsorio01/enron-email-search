@@ -12,11 +12,16 @@ import (
 type App struct {
 	router   http.Handler
 	dbClient *db.ZincClient
+	config   Config
 }
 
-func New() *App {
+func New(config Config) *App {
 	app := &App{
-		dbClient: db.NewZincClient("http://localhost:4080", "admin", "Complexpass#123"),
+		dbClient: db.NewZincClient(
+			config.dbAddr,
+			config.dbUser,
+			config.dbPassword),
+		config: config,
 	}
 	app.loadRoutes()
 	return app
@@ -24,7 +29,7 @@ func New() *App {
 
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    ":3000",
+		Addr:    fmt.Sprintf(":%d", a.config.serverPort),
 		Handler: a.router,
 	}
 	// Ping the database to check if it's up

@@ -42,8 +42,7 @@ func (zc *ZincClient) Ping() error {
 	if err != nil {
 		return err
 	}
-
-	resp, err := zc.httpClient.Do(req)
+	resp, err := zc.httpClient.Get(req.URL.String())
 	if err != nil {
 		return fmt.Errorf("ping failed: %w", err)
 	}
