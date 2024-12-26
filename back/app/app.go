@@ -5,18 +5,21 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/DanielOsorio01/enron-email-search/back/db"
 )
 
 type App struct {
 	router   http.Handler
-	dbClient *http.Client
+	dbClient *db.ZincClient
 }
 
 func New() *App {
-	return &App{
-		router:   loadRoutes(),
-		dbClient: &http.Client{},
+	app := &App{
+		dbClient: db.NewZincClient("http://localhost:4080", "admin", "Complexpass#123"),
 	}
+	app.loadRoutes()
+	return app
 }
 
 func (a *App) Start(ctx context.Context) error {
@@ -25,7 +28,7 @@ func (a *App) Start(ctx context.Context) error {
 		Handler: a.router,
 	}
 	// Ping the database to check if it's up
-	_, err := a.dbClient.Get("http://localhost:4080")
+	err := a.dbClient.Ping()
 	if err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
