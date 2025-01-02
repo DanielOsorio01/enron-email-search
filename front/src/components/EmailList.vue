@@ -5,13 +5,13 @@
         v-for="(email, index) in emails"
         :key="index"
         class="bg-white shadow rounded-lg p-4 hover:shadow-lg transition-shadow"
+        @click="showEmailDetail(email)"
       >
         <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ email.subject }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
           <div><span class="font-medium">From:</span> {{ email.from }}</div>
           <div><span class="font-medium">To:</span> {{ email.to }}</div>
         </div>
-        <!-- <p class="mt-3 text-gray-700">{{ truncateBody(searchQuery, email.body) }}</p> -->
         <p class="mt-3 text-gray-700">
           <template v-for="(part, index) in highlightedBody(email.body, searchQuery)" :key="index">
             <span v-if="part.highlight" class="bg-yellow-200">{{ part.text }}</span>
@@ -20,12 +20,21 @@
         </p>
       </div>
     </div>
+
+    <!-- Email Detail Dialog -->
+    <EmailDetail
+      v-if="emailOpened && selectedEmail"
+      :email="selectedEmail"
+      :search-query="searchQuery"
+      :handle-close="closeEmailDetail"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue'
+import { defineComponent, ref, type PropType } from 'vue'
 import type { Email } from '../types/Email'
+import EmailDetail from './EmailDetail.vue'
 
 export default defineComponent({
   props: {
@@ -38,6 +47,7 @@ export default defineComponent({
       required: true,
     },
   },
+  components: { EmailDetail },
   setup() {
     const highlightedBody = (
       body: string,
@@ -74,7 +84,18 @@ export default defineComponent({
       // Concatenate the arrays
       return startEllipsis.concat(result, endEllipsis)
     }
-    return { highlightedBody }
+
+    const emailOpened = ref(false)
+    const selectedEmail = ref<Email | null>(null)
+    const showEmailDetail = (email: Email) => {
+      selectedEmail.value = email
+      emailOpened.value = true
+    }
+    const closeEmailDetail = () => {
+      emailOpened.value = false
+      selectedEmail.value = null
+    }
+    return { highlightedBody, emailOpened, selectedEmail, showEmailDetail, closeEmailDetail }
   },
 })
 </script>
