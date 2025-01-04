@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Vue Frontend
+  frontend:
+    build:
+      context: ./front # Adjust to the directory where your Vue app Dockerfile is located
+    ports:
+      - "80:80"  # Maps port 80 on your host to port 80 in the container
+    networks:
+      - app-network
+    environment:
+      - VUE_APP_API_URL=http://backend:3000  # Adjust the API URL if needed
+  
+  # Go Backend
+  backend:
+    build:
+      context: ./back  # Adjust to the directory where your Go backend Dockerfile is located
+    ports:
+      - "3000:3000"  # Maps port 8080 on the container to port 8081 on your host
+    depends_on:
+      - zincsearch  # Ensures the Zincsearch service starts first
+    networks:
+      - app-network
+    environment:
+      - DB_HOST=http://zincsearch:4080  # Adjust based on your database connection details
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SERVER_PORT=3000
+  
+  # Zincsearch Database
+  zincsearch:
+    image: public.ecr.aws/zinclabs/zinc:latest  # Or the specific version you want to use
+    ports:
+      - "4080:4080"  # Exposes the database on port 4080
+    networks:
+      - app-network
+    environment:
+      - ZINC_FIRST_ADMIN_USER=${DB_USER}
+      - ZINC_FIRST_ADMIN_PASSWORD=${DB_PASSWORD}
+
+# Define custom networks for communication between containers
+networks:
+  app-network:
+    driver: bridge

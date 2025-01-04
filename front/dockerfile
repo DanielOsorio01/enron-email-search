@@ -1,0 +1,27 @@
+# Step 1: Build the Vue app with TypeScript
+FROM node:23.5.0 AS builder
+
+# Set the working directory
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the application files
+COPY . .
+
+# Build the Vue app for production
+RUN npm run build
+
+# Step 2: Serve the Vue app using Nginx
+FROM nginx:alpine
+
+# Copy the built app from the builder stage into the Nginx server
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose port 80 for the Nginx server
+EXPOSE 80
+
+# Start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
