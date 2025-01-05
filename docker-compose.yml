@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Vue Frontend
   frontend:
@@ -30,7 +28,7 @@ services:
   
   # Zincsearch Database
   zincsearch:
-    image: public.ecr.aws/zinclabs/zinc:latest  # Or the specific version you want to use
+    image: public.ecr.aws/zinclabs/zincsearch:latest  # Or the specific version you want to use
     ports:
       - "4080:4080"  # Exposes the database on port 4080
     networks:
@@ -38,6 +36,27 @@ services:
     environment:
       - ZINC_FIRST_ADMIN_USER=${DB_USER}
       - ZINC_FIRST_ADMIN_PASSWORD=${DB_PASSWORD}
+      - GIN_MODE=release
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:4080/ui/search"]
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 5
+  
+  load-data:
+    build:
+      context: ./load-data
+      dockerfile: Dockerfile
+    container_name: load-data
+    depends_on:
+      - zincsearch
+        # condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      - ZINCSEARCH_URL=http://zincsearch:4080
+    
+    
 
 # Define custom networks for communication between containers
 networks:

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -39,20 +40,32 @@ func PostEmails(emails []Email) error {
 		}
 
 		// Create a POST request with the plain JSON data
-		req, err := http.NewRequest("POST", "http://localhost:4080/api/_bulkv2", &buf)
+		url := "http://localhost:4080"
+		if envURL := os.Getenv("ZINCSEARCH_URL"); envURL != "" {
+			url = envURL
+		}
+		endpoint := url + "/api/_bulkv2"
+		req, err := http.NewRequest("POST", endpoint, &buf)
 		if err != nil {
 			log.Printf("Error creating request: %v", err)
 			return
 		}
-
-		req.SetBasicAuth("admin", "Complexpass#123")
+		username := os.Getenv("DB_USER")
+		if username == "" {
+			username = "admin"
+		}
+		password := os.Getenv("DB_PASSWORD")
+		if password == "" {
+			password = "Complexpass#123"
+		}
+		req.SetBasicAuth(username, password)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Acquire a semaphore slot before making the request
 		sem <- struct{}{}
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Printf("Error sending request: %v", err)
+			log.Printf("Error sending request to %s: %v", endpoint, err)
 			<-sem // Release the semaphore slot
 			return
 		}
