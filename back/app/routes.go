@@ -15,7 +15,7 @@ func (a *App) loadRoutes() {
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
 		// Allow only your frontend's origin
-		AllowedOrigins: []string{"http://localhost:8080", "http://127.0.0.1:8080", "https://your-production-site.com"},
+		AllowedOrigins: []string{"http://localhost:8080", "http://127.0.0.1:8080", "http://localhost"},
 		// Restrict allowed HTTP methods
 		AllowedMethods: []string{"GET"},
 		// Allow specific headers (Content-Type for JSON requests, Authorization for tokens, etc.)
