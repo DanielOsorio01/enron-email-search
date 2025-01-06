@@ -43,18 +43,18 @@ services:
     #   timeout: 10s
     #   retries: 5
   
-  load-data:
-    build:
-      context: ./load-data
-      dockerfile: Dockerfile
-    container_name: load-data
-    depends_on:
-      - zincsearch
-        # condition: service_healthy
-    networks:
-      - app-network
-    environment:
-      - ZINCSEARCH_URL=http://zincsearch:4080
+  # load-data:
+  #   build:
+  #     context: ./load-data
+  #     dockerfile: Dockerfile
+  #   container_name: load-data
+  #   depends_on:
+  #     - zincsearch
+  #       # condition: service_healthy
+  #   networks:
+  #     - app-network
+  #   environment:
+  #     - ZINCSEARCH_URL=http://zincsearch:4080
     
     
 
