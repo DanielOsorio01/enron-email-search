@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version-file: load-data/go.sum
+          go-version-file: load-data/go.mod
 
       - name: Build binary
         run: |
