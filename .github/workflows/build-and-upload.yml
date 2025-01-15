@@ -28,48 +28,27 @@ jobs:
         run: |
           cd load-data
           go build -o populate_db main.go
-
-      # Step 4: Set up Git authentication
-      - name: Set up Git authentication
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-
-      # Step 5: Delete existing release and tag (if any)
-      - name: Delete existing release and tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Delete the release (ignore errors if it doesn't exist)
-          gh release delete v1.0.0 -y || true
-
-          # Delete the tag (ignore errors if it doesn't exist)
-          git tag -d v1.0.0 || true
-          git push origin :refs/tags/v1.0.0 || true
-
-      # Step 6: Create and push a new tag
-      - name: Create and push new tag
-        run: |
-          git tag v1.0.0
-          git push origin v1.0.0
-
-      # Step 7: Create a new release with the binary
-      - name: Create release
+      
+      - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v1.0.0
-          release_name: "Release v1.0.0"
-          body: "Updated binary for v1.0.0"
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 8: Upload the binary to the release
-      - name: Upload release asset
+          # Using short SHA from 2nd step for tag and release name.
+          tag_name: v1.0.0-${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+        # Now we upload the artifact we generated in the first step to
+        # the release we created in the 3nd step
+      - name: Upload Release Asset
+        id: upload-release-asset 
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: load-data/populate_db
-          asset_name: populate_db
-          asset_content_type: application/octet-stream
+          asset_path: ./app.zip
+          asset_name: app.zip
+          asset_content_type: application/zip
+          
