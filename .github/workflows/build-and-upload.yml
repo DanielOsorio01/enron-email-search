@@ -29,7 +29,16 @@ jobs:
           cd load-data
           go build -o populate_db main.go
 
-      # Step 4: Delete existing release and tag (if any)
+      # Step 4: Set up Git authentication
+      - name: Set up Git authentication
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+
+      # Step 5: Delete existing release and tag (if any)
       - name: Delete existing release and tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,13 +50,13 @@ jobs:
           git tag -d v1.0.0 || true
           git push origin :refs/tags/v1.0.0 || true
 
-      # Step 5: Create and push a new tag
+      # Step 6: Create and push a new tag
       - name: Create and push new tag
         run: |
           git tag v1.0.0
           git push origin v1.0.0
 
-      # Step 6: Create a new release with the binary
+      # Step 7: Create a new release with the binary
       - name: Create release
         uses: actions/create-release@v1
         with:
@@ -56,7 +65,7 @@ jobs:
           body: "Updated binary for v1.0.0"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 7: Upload the binary to the release
+      # Step 8: Upload the binary to the release
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
@@ -64,4 +73,3 @@ jobs:
           asset_path: load-data/populate_db
           asset_name: populate_db
           asset_content_type: application/octet-stream
-          
