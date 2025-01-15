@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -51,4 +54,3 @@ jobs:
           asset_path: ./app.zip
           asset_name: app.zip
           asset_content_type: application/zip
-          
