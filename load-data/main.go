@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
@@ -60,9 +59,6 @@ func main() {
 			fmt.Println("Memory profiling complete.")
 		}()
 	}
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 
 	// Read email files
 	fmt.Printf("Indexing emails in %s...\n", rootFolder)
@@ -74,8 +70,6 @@ func main() {
 		return
 	}
 	fmt.Printf("%d emails indexed in %v.\n", len(emails), duration)
-
-	// log.Printf("Email example: \n%s\n", emails[0].String())
 
 	fmt.Println("Posting emails to the database...")
 	startTime = time.Now()
