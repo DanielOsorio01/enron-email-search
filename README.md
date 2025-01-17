@@ -5,6 +5,7 @@ Download the dataset [here](http://www.cs.cmu.edu/~enron/enron_mail_20110402.tgz
 For deploying in AWS, you need to have the Terraform and AWS CLI installed, also set up credentials for AWS.
 
 ## Terraform Commands
+(I recommend using WSL if you are on Windows)
 * Initialize the terraform directory
 ```bash
 terraform init
@@ -30,14 +31,29 @@ First, export the private key of the bastion host
 terraform output -raw private_key > private_key.pem
 ```
 
-Then, add the key to your ssh agent (I recommend using WSL if you are on Windows)
+Start the ssh-add agent
+```bash
+eval "$(ssh-agent -s)""
+```
+
+Limit the permissions of the private key
+```bash
+chmod 600 private_key.pem
+```
+
+Then, add the key to your ssh agent 
 ```bash
 ssh-add private_key.pem
 ```
 
-Add the bastion host to your ssh config
+Add the bastion host to your ssh config.
+Create a file named `config` in the `~/.ssh` directory and add the following content
 ```bash
-echo "Host bastion-host\n  HostName <bastion_ip>\n  User ec2-user\n  IdentityFile private_key.pem" >> ~/.ssh/config
+Host bastion-host
+    HostName <bastion_public_ip>
+    User ec2-user
+    IdentityFile ~/.ssh/private_key.pem
+    ForwardAgent yes
 ```
 
 Finally, ssh into the bastion host
@@ -48,4 +64,11 @@ ssh bastion-host
 From the bastion host, you can ssh into the private instances
 ```bash
 ssh -A ec2-user@<backend_private_ip>
+```
+
+## Commands to update frontend image
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 418272755608.dkr.ecr.us-east-1.amazonaws.com
+docker tag enron-email-search-frontend:latest 418272755608.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+docker push 418272755608.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
 ```

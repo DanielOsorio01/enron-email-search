@@ -213,6 +213,22 @@ resource "aws_security_group" "private-sg" {
     security_groups = [aws_security_group.allow_ssh.id] # Reference the bastion host security group
   }
 
+  # Allow port 4080 and 3000 for backend and database communication from the bastion host
+  ingress {
+    from_port       = 4080
+    to_port         = 4080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.allow_ssh.id] # Reference the bastion host security group
+  }
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.allow_ssh.id] # Reference the bastion host security group
+  }
+
+
   # Allow other necessary application-specific traffic (e.g., backend communication)
   ingress {
     description = "Allow communication within private network"
@@ -220,6 +236,13 @@ resource "aws_security_group" "private-sg" {
     to_port     = 65535
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"] # Replace with your VPC CIDR block
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    security_groups = [aws_security_group.public-sg.id]
   }
 
   # Allow outbound traffic to the internet via NAT or other routes
@@ -326,7 +349,7 @@ resource "aws_instance" "frontend" {
                           sudo chmod 666 /var/run/docker.sock
                           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 418272755608.dkr.ecr.us-east-1.amazonaws.com
                           docker pull 418272755608.dkr.ecr.us-east-1.amazonaws.com/frontend
-                          docker run -d -p 80:80 --name frontend -e VUE_APP_API_URL=http://${aws_instance.backend.private_ip}:3000 418272755608.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+                          docker run -d -p 80:80 --name frontend -e BACKEND_URL=${aws_instance.backend.private_ip}:3000 418272755608.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
                           EOF
   tags = {
     Name = "enron-web-server"

@@ -7,8 +7,10 @@ services:
       - "80:80"  # Maps port 80 on your host to port 80 in the container
     networks:
       - app-network
+    depends_on:
+      - backend  # Ensures the backend service starts first
     environment:
-      - VUE_APP_API_URL=http://backend:3000  # Adjust the API URL if needed
+      - BACKEND_URL=localhost:3000  # Adjust the API URL if needed
   
   # Go Backend
   backend:
@@ -36,28 +38,8 @@ services:
     environment:
       - ZINC_FIRST_ADMIN_USER=${DB_USER}
       - ZINC_FIRST_ADMIN_PASSWORD=${DB_PASSWORD}
-      - GIN_MODE=release
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:4080/ui/search"]
-    #   interval: 10s
-    #   timeout: 10s
-    #   retries: 5
-  
-  # load-data:
-  #   build:
-  #     context: ./load-data
-  #     dockerfile: Dockerfile
-  #   container_name: load-data
-  #   depends_on:
-  #     - zincsearch
-  #       # condition: service_healthy
-  #   networks:
-  #     - app-network
-  #   environment:
-  #     - ZINCSEARCH_URL=http://zincsearch:4080
-    
-    
-
+      #- GIN_MODE=release
+      
 # Define custom networks for communication between containers
 networks:
   app-network:

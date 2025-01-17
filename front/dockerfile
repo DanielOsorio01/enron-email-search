@@ -20,8 +20,9 @@ FROM nginx:alpine
 # Copy the built app from the builder stage into the Nginx server
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80 for the Nginx server
-EXPOSE 80
+# Copy a script that generates the runtime config
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Start Nginx in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Use the script as the startup command
+CMD ["/entrypoint.sh"]

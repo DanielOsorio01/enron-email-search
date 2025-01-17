@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import type { Email } from './types/Email'
 import EmailList from './components/EmailList.vue'
 import EmailSearchHeader from './components/EmailSearchHeader.vue'
@@ -43,11 +43,25 @@ const emails = ref<Email[]>([])
 const errorMessage = ref('')
 const hits = ref(0)
 const hasSearched = ref(false)
+const backend_URL = ref('fallback_backend_ip') // TODO: Change to localhost after
+
+onMounted(() => {
+  if (window.APP_CONFIG?.backend_URL) {
+    backend_URL.value = window.APP_CONFIG.backend_URL;
+  }
+  // console.log("Vue app mounted successfully, backend URL:", backend_URL.value);
+});
 
 const handleSearch = async (searchQuery: string) => {
   hasSearched.value = true
   try {
-    const response = await fetch(`http://localhost:3000/emails?term=${searchQuery}`)
+
+    // Inject the backend URL provided config.js
+    backend_URL.value = window.APP_CONFIG?.backend_URL
+    if (!backend_URL.value || backend_URL.value === 'fallback_backend_ip') {
+      console.error('Backend IP not found. Ensure it is provided in main.ts.');
+    }
+    const response = await fetch(`http://${backend_URL.value}/emails?term=${searchQuery}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch emails: ${response.statusText}`)
     }
