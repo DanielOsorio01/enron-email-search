@@ -29,3 +29,4 @@ load-data/mem.prof
 load-data/main
 load-data/populate_db
 load-data/enron_mail_2011_04_02/
+load-data/emails.ndjson

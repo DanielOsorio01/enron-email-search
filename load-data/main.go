@@ -15,6 +15,9 @@ import (
 
 func main() {
 
+	var count uint64
+	var err error
+
 	// Check if the user provided at least one argument (the folder name)
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide the folder name as a positional argument.")
@@ -63,22 +66,23 @@ func main() {
 	// Read email files
 	fmt.Printf("Indexing emails in %s...\n", rootFolder)
 	startTime := time.Now()
-	emails, err := email.LoadEmails(rootFolder)
+	//emails, err := email.LoadEmails(rootFolder)
+	count, err = email.SaveEmails(rootFolder)
 	duration := time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error indexing emails: %v\n", err)
 		return
 	}
-	fmt.Printf("%d emails indexed in %v.\n", len(emails), duration)
+	// fmt.Printf("%d emails indexed in %v.\n", len(emails), duration)
+	fmt.Printf("%d emails indexed in %v.\n", count, duration)
 
-	fmt.Println("Posting emails to the database...")
-	startTime = time.Now()
-	err = email.PostEmails(emails)
-	duration = time.Since(startTime)
-	if err != nil {
-		fmt.Printf("Error sending emails to bulkv2 API: %v\n", err)
-		return
-	}
-	fmt.Printf("Emails sent to Zincsearch database in %v.\n", duration)
-
+	// fmt.Println("Posting emails to the database...")
+	// startTime = time.Now()
+	// //err = email.PostEmails(emails)
+	// duration = time.Since(startTime)
+	// if err != nil {
+	// 	fmt.Printf("Error sending emails to bulkv2 API: %v\n", err)
+	// 	return
+	// }
+	// fmt.Printf("Emails sent to Zincsearch database in %v.\n", duration)
 }
