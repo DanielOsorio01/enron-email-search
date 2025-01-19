@@ -109,7 +109,7 @@ resource "aws_security_group" "allow_ssh" {
     to_port     = 22
     protocol    = "tcp"
     # Temporarily use "191.156.32.0/21" as the CIDR block for testing purposes
-    cidr_blocks = ["191.156.32.0/20"]# ["${chomp(data.http.ip.response_body)}/32"]
+    cidr_blocks = ["190.130.107.214/32"]# ["${chomp(data.http.ip.response_body)}/32"]
   }
 
   egress {
