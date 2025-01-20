@@ -1,7 +1,9 @@
 package email
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -93,9 +95,16 @@ func SaveEmails(rootFolder string) (uint64, error) {
 				return // Continue processing other files
 			}
 
+			jsonData, err := json.Marshal(email)
+
+			if err != nil {
+				fmt.Printf("Warning: Failed to marshal email to JSON: %v\n", err)
+				return
+			}
+
 			// Save the email to the NDJSON file
 			mu.Lock()
-			_, err = fmt.Fprintf(file, "%s\n", email)
+			_, err = fmt.Fprintf(file, "%s\n", jsonData)
 			mu.Unlock()
 			if err != nil {
 				fmt.Printf("Warning: Failed to save email to file: %v\n", err)
@@ -110,8 +119,32 @@ func SaveEmails(rootFolder string) (uint64, error) {
 	wg.Wait()
 
 	if err != nil {
-		return 0, fmt.Errorf("Error saving emails: %v\n", err)
+		return 0, fmt.Errorf("error saving emails: %v", err)
 	}
 
 	return count, err
+}
+
+func DiscoverEmailFiles(rootFolder string, filepaths chan<- string, wg *sync.WaitGroup) {
+	defer close(filepaths) // Close the channel when this function returns
+
+	err := filepath.Walk(rootFolder, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to access path %s: %v", path, err)
+		}
+
+		if !info.IsDir() {
+			filepaths <- path // Send the file path to the channel
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Error discovering email files: %v\n", err)
+	}
+
+	log.Println("Finished discovering email files.")
+
+	wg.Done() // Decrement the WaitGroup counter
 }

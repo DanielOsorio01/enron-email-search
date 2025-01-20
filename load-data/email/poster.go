@@ -9,12 +9,6 @@ import (
 	"sync"
 )
 
-// BulkV2Data structure for the bulkv2 API request
-type BulkV2Data struct {
-	Index   string  `json:"index"`
-	Records []Email `json:"records"`
-}
-
 func PostEmails(emails []Email) error {
 	var wg sync.WaitGroup
 	concurrencyLimit := 2
@@ -95,4 +89,80 @@ func PostEmails(emails []Email) error {
 	wg.Wait()
 
 	return nil
+}
+
+func BulkPostEmails(emails []Email) error {
+
+	// Create a POST request with the plain JSON data
+	url := "http://localhost:4080"
+	if envURL := os.Getenv("ZINCSEARCH_URL"); envURL != "" {
+		url = envURL
+	}
+	endpoint := url + "/api/_bulkv2"
+
+	body := BulkV2Data{
+		Index:   "enron_emails",
+		Records: emails,
+	}
+
+	bodyBytes, err := json.Marshal(body)
+
+	if err != nil {
+		log.Printf("Error encoding JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(bodyBytes))
+	if err != nil {
+		log.Printf("Error creating request: %v", err)
+		return err
+	}
+
+	username := os.Getenv("DB_USER")
+	if username == "" {
+		username = "admin"
+	}
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" {
+		password = "Complexpass#123"
+	}
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Error sending request to %s: %v", endpoint, err)
+	}
+
+	defer resp.Body.Close()
+
+	// Print the response status only on error
+	// if resp.StatusCode != http.StatusOK {
+	// 	log.Printf("Request failed with status: %s", resp.Status)
+	// }
+	log.Printf("Request: %v", resp)
+
+	return nil
+}
+
+func SendEmailBatches(emailsQueue <-chan Email, batchSize int, wg *sync.WaitGroup, client *ZincClient) {
+	defer wg.Done()
+
+	var emails []Email
+
+	for email := range emailsQueue {
+		emails = append(emails, email)
+		if len(emails) == batchSize {
+			if err := client.SendEmails(emails); err != nil {
+				log.Printf("Error sending emails: %v", err)
+			}
+			emails = nil
+		}
+	}
+
+	// Send the remaining emails
+	if len(emails) > 0 {
+		if err := client.SendEmails(emails); err != nil {
+			log.Printf("Error sending emails: %v", err)
+		}
+	}
 }

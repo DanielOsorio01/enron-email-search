@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -130,4 +131,23 @@ func ParseEmail(filePath string) (Email, error) {
 
 	email.Body = strings.Join(bodyLines, "\n")
 	return email, nil
+}
+
+func ProcessEmailFiles(emailFiles <-chan string, emailQueue chan<- Email, wg *sync.WaitGroup) {
+	// Reads email file paths from the emailFiles channel
+	// and sends parsed emails to the emailQueue channel.
+
+	defer wg.Done() // Decrement the counter when the function completes
+
+	// Read email file paths from the channel
+	for path := range emailFiles {
+		email, err := ParseEmail(path)
+		if err != nil {
+			log.Printf("Warning: Failed to parse file %s: %v\n", path, err)
+			continue
+		}
+
+		emailQueue <- email // Send the parsed email to the emailQueue channel
+	}
+	log.Println("Finished processing email files.")
 }

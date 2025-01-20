@@ -8,16 +8,20 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"time"
+	"sync"
 
 	"github.com/DanielOsorio01/enron-email-search/load-data/email"
 )
 
+const (
+	zincURL        = "http://localhost:4080"
+	batchSize      = 1000
+	workerCount    = 16 // Adjust this based on the number of CPU cores
+	fileQueueSize  = 5000
+	emailQueueSize = 2000
+)
+
 func main() {
-
-	var count uint64
-	var err error
-
 	// Check if the user provided at least one argument (the folder name)
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide the folder name as a positional argument.")
@@ -63,26 +67,42 @@ func main() {
 		}()
 	}
 
-	// Read email files
-	fmt.Printf("Indexing emails in %s...\n", rootFolder)
-	startTime := time.Now()
-	//emails, err := email.LoadEmails(rootFolder)
-	count, err = email.SaveEmails(rootFolder)
-	duration := time.Since(startTime)
-	if err != nil {
-		fmt.Printf("Error indexing emails: %v\n", err)
-		return
-	}
-	// fmt.Printf("%d emails indexed in %v.\n", len(emails), duration)
-	fmt.Printf("%d emails indexed in %v.\n", count, duration)
+	var wg sync.WaitGroup // WaitGroup to wait for all goroutines to complete
+	var workerWg sync.WaitGroup // WaitGroup to wait for all workers to complete
 
-	// fmt.Println("Posting emails to the database...")
-	// startTime = time.Now()
-	// //err = email.PostEmails(emails)
-	// duration = time.Since(startTime)
-	// if err != nil {
-	// 	fmt.Printf("Error sending emails to bulkv2 API: %v\n", err)
-	// 	return
-	// }
-	// fmt.Printf("Emails sent to Zincsearch database in %v.\n", duration)
+	var client *email.ZincClient = email.NewZincClient(zincURL, "admin", "Complexpass#123")
+
+	// Create a channel to receive email file paths
+	emailFiles := make(chan string, fileQueueSize) // Buffer capacity of 5000 files
+	// Create a channel to send parsed emails
+	emailQueue := make(chan email.Email, emailQueueSize) // Buffer capacity of 2000 emails
+
+	// Discover all email files in the root folder
+	wg.Add(1)
+	go email.DiscoverEmailFiles(rootFolder, emailFiles, &wg)
+	fmt.Println("Discovering email files...")
+
+	// Start the worker pool to process email files
+	wg.Add(1) // Increment the counter for the worker pool
+	for i := 0; i < workerCount; i++ {
+		workerWg.Add(1)
+		go email.ProcessEmailFiles(emailFiles, emailQueue, &workerWg)
+		fmt.Printf("Starting worker %d\n", i+1)
+	}
+
+	// Goroutine that closes the emailQueue channel
+	go func() {
+		workerWg.Wait() // Wait for all workers to complete
+		close(emailQueue) // Close the emailQueue channel
+		wg.Done() // Decrement the counter for the worker pool
+	}()
+
+	// Start a batch processor to send emails to Zinc
+	wg.Add(1)
+	go email.SendEmailBatches(emailQueue, batchSize, &wg, client)
+	fmt.Println("Starting email batch processor...")
+
+	// Wait for all goroutines to complete
+	wg.Wait()
+	fmt.Println("All goroutines completed.")
 }
