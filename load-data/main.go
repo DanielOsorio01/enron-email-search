@@ -9,16 +9,18 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/DanielOsorio01/enron-email-search/load-data/email"
 )
 
 const (
 	zincURL        = "http://localhost:4080"
-	batchSize      = 1000
-	workerCount    = 16 // Adjust this based on the number of CPU cores
-	fileQueueSize  = 5000
-	emailQueueSize = 2000
+	batchSize      = 5000
+	fileQueueSize  = 530000
+	emailQueueSize = 15000
+	statusInterval = 5 // seconds
 )
 
 func main() {
@@ -31,15 +33,17 @@ func main() {
 	// read the folder name from the first argument
 	rootFolder := os.Args[1]
 
+	var workerCount = runtime.NumCPU()
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var memprofile = flag.String("memprofile", "", "write memory profile to file")
 
 	flag.CommandLine.Parse(os.Args[2:]) // Parse only the flags
 
 	// Debugging: Print parsed values
-	fmt.Println("Root folder:", rootFolder)
-	fmt.Println("cpuprofile flag value:", *cpuprofile)
-	fmt.Println("memprofile flag value:", *memprofile)
+	log.Println("Root folder:", rootFolder)
+	log.Println("cpuprofile flag value:", *cpuprofile)
+	log.Println("memprofile flag value:", *memprofile)
+	log.Println("workerCount:", workerCount)
 
 	if *cpuprofile != "" {
 		fmt.Println("Starting CPU profiling...")
@@ -67,10 +71,26 @@ func main() {
 		}()
 	}
 
-	var wg sync.WaitGroup // WaitGroup to wait for all goroutines to complete
+	var wg sync.WaitGroup       // WaitGroup to wait for all goroutines to complete
 	var workerWg sync.WaitGroup // WaitGroup to wait for all workers to complete
-
 	var client *email.ZincClient = email.NewZincClient(zincURL, "admin", "Complexpass#123")
+	var sentEmails atomic.Uint64   // Counter for the number of emails sent
+	var done = make(chan struct{}) // Signal to stop the status goroutine
+
+	// Start a goroutine to print the status
+	go func() {
+		ticker := time.NewTicker(statusInterval * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				log.Printf("[STATUS] Sent emails: %d\n", sentEmails.Load())
+			case <-done:
+				log.Println("[STATUS] Final count:", sentEmails.Load())
+				return
+			}
+		}
+	}()
 
 	// Create a channel to receive email file paths
 	emailFiles := make(chan string, fileQueueSize) // Buffer capacity of 5000 files
@@ -80,29 +100,29 @@ func main() {
 	// Discover all email files in the root folder
 	wg.Add(1)
 	go email.DiscoverEmailFiles(rootFolder, emailFiles, &wg)
-	fmt.Println("Discovering email files...")
+	log.Println("Discovering email files...")
 
 	// Start the worker pool to process email files
 	wg.Add(1) // Increment the counter for the worker pool
 	for i := 0; i < workerCount; i++ {
 		workerWg.Add(1)
 		go email.ProcessEmailFiles(emailFiles, emailQueue, &workerWg)
-		fmt.Printf("Starting worker %d\n", i+1)
 	}
 
 	// Goroutine that closes the emailQueue channel
 	go func() {
-		workerWg.Wait() // Wait for all workers to complete
+		workerWg.Wait()   // Wait for all workers to complete
 		close(emailQueue) // Close the emailQueue channel
-		wg.Done() // Decrement the counter for the worker pool
+		wg.Done()         // Decrement the counter for the worker pool
 	}()
 
 	// Start a batch processor to send emails to Zinc
 	wg.Add(1)
-	go email.SendEmailBatches(emailQueue, batchSize, &wg, client)
-	fmt.Println("Starting email batch processor...")
+	go email.SendEmailBatches(emailQueue, batchSize, &wg, client, &sentEmails)
+	log.Println("Starting email batch processor...")
 
 	// Wait for all goroutines to complete
 	wg.Wait()
-	fmt.Println("All goroutines completed.")
+	done <- struct{}{} // Signal the status goroutine to stop
+	time.Sleep(1 * time.Second)
 }

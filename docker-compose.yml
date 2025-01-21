@@ -38,6 +38,7 @@ services:
     environment:
       - ZINC_FIRST_ADMIN_USER=${DB_USER}
       - ZINC_FIRST_ADMIN_PASSWORD=${DB_PASSWORD}
+      - ZINC_PROMETHEUS_ENABLE=true
       #- GIN_MODE=release
       
 # Define custom networks for communication between containers

@@ -30,3 +30,7 @@ load-data/main
 load-data/populate_db
 load-data/enron_mail_2011_04_02/
 load-data/emails.ndjson
+load-data/profiling/
+load-data/README.md
+load-data/mem_v1.png
+load-data/mem_v2.png

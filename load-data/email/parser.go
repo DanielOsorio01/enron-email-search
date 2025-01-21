@@ -11,7 +11,7 @@ import (
 )
 
 // ParseEmail parses the content of an email file into an Email struct.
-func ParseEmail(filePath string) (Email, error) {
+func parseEmail(filePath string) (Email, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Email{}, fmt.Errorf("failed to open file %s: %v", filePath, err)
@@ -141,7 +141,7 @@ func ProcessEmailFiles(emailFiles <-chan string, emailQueue chan<- Email, wg *sy
 
 	// Read email file paths from the channel
 	for path := range emailFiles {
-		email, err := ParseEmail(path)
+		email, err := parseEmail(path)
 		if err != nil {
 			log.Printf("Warning: Failed to parse file %s: %v\n", path, err)
 			continue
@@ -149,5 +149,4 @@ func ProcessEmailFiles(emailFiles <-chan string, emailQueue chan<- Email, wg *sy
 
 		emailQueue <- email // Send the parsed email to the emailQueue channel
 	}
-	log.Println("Finished processing email files.")
 }
