@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	// Crea la instancia de la aplicación con la configuración cargada
 	app := app.New(*app.LoadConfig())
 
 	// Define a context that will be canceled when a SIGINT is sent

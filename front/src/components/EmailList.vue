@@ -11,6 +11,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
           <div><span class="font-medium">From:</span> {{ email.from }}</div>
           <div><span class="font-medium">To:</span> {{ email.to }}</div>
+          <div><span class="font-medium">Date:</span> {{ email.date }}</div>
         </div>
         <p class="mt-3 text-gray-700">
           <template v-for="(part, index) in highlightedBody(email.body, searchQuery)" :key="index">

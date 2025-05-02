@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  backend_URL: 'http://localhost:3000',
-};
+  backend_URL: 'http://localhost:3001',
+}

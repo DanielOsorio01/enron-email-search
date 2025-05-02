@@ -27,7 +27,7 @@ func DefaultSearchParams() SearchParams {
 		From:         DefaultFrom,
 		MaxResults:   DefaultMaxResults,
 		SourceFields: []string{}, // Empty array returns all fields
-		SortFields:   []string{"-@timestamp"},
+		SortFields:   []string{"-date"},
 	}
 }
 

@@ -14,16 +14,14 @@ import (
 func (a *App) loadRoutes() {
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
-		// Allow only your frontend's origin
-		AllowedOrigins: []string{"http://localhost:8080", "http://127.0.0.1:8080", "http://localhost"},
+		// Allow all origins
+		AllowedOrigins: []string{"*"},
 		// Restrict allowed HTTP methods
 		AllowedMethods: []string{"GET"},
 		// Allow specific headers (Content-Type for JSON requests, Authorization for tokens, etc.)
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		// Allow credentials (cookies, authorization headers, etc.) only if necessary
 		AllowCredentials: false,
-		// Cache preflight responses for better performance
-		MaxAge: 300,
 	}))
 	router.Use(middleware.Logger)
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {

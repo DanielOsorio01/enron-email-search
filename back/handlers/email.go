@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,6 +30,8 @@ func (h *Email) List(w http.ResponseWriter, r *http.Request) {
 	// Parse query parameters
 	query := r.URL.Query()
 
+	fmt.Println("query", query)
+
 	// Get search parameters with defaults
 	term := query.Get("term")
 	if term == "" {
@@ -41,9 +44,11 @@ func (h *Email) List(w http.ResponseWriter, r *http.Request) {
 	field := query.Get("field")
 	searchType := query.Get("search_type")
 
-	// Create search parameters
+	//// Create search parameters
 	params := email.DefaultSearchParams()
 	params.Term = term
+
+	//fmt.Println("from", from, "maxResults", maxResults, "field", field, "searchType", searchType)
 
 	// Override defaults if provided in query
 	if from > 0 {

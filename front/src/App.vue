@@ -29,6 +29,7 @@
       </div>
       <EmailList :emails="emails" :search-query="query" />
     </template>
+    <button @click="nextPage">Next Page</button>
   </main>
 </template>
 
@@ -47,27 +48,60 @@ const backend_URL = ref('fallback_backend_ip') // TODO: Change to localhost afte
 
 onMounted(() => {
   if (window.APP_CONFIG?.backend_URL) {
-    backend_URL.value = window.APP_CONFIG.backend_URL;
+    backend_URL.value = window.APP_CONFIG.backend_URL
   }
   // console.log("Vue app mounted successfully, backend URL:", backend_URL.value);
-});
+})
 
 const handleSearch = async (searchQuery: string) => {
   hasSearched.value = true
   try {
-
     // Inject the backend URL provided config.js
     backend_URL.value = window.APP_CONFIG?.backend_URL
+    console.log('Backend URL:', backend_URL.value)
     if (!backend_URL.value || backend_URL.value === 'fallback_backend_ip') {
-      console.error('Backend IP not found. Ensure it is provided in main.ts.');
+      console.error('Backend IP not found. Ensure it is provided in main.ts.')
     }
-    const response = await fetch(`http://${backend_URL.value}/emails?term=${searchQuery}`)
+    const response = await fetch(`${backend_URL.value}/emails?term=${searchQuery}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch emails: ${response.statusText}`)
     }
     const jsonObj = await response.json()
     if (jsonObj.success) {
       query.value = searchQuery
+      errorMessage.value = ''
+      // Sort emails by date
+      emails.value = jsonObj.data.emails.sort((a: Email, b: Email) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
+      emails.value = jsonObj.data.emails
+      hits.value = jsonObj.data.total
+    } else {
+      errorMessage.value = jsonObj.message
+      hits.value = 0
+    }
+  } catch (error) {
+    errorMessage.value = 'Failed to connect to the server. Please try again later.'
+    hits.value = 0
+    console.error(error)
+  }
+}
+
+const nextPage = async () => {
+  try {
+    // Inject the backend URL provided config.js
+    backend_URL.value = window.APP_CONFIG?.backend_URL
+    if (!backend_URL.value || backend_URL.value === 'fallback_backend_ip') {
+      console.error('Backend IP not found. Ensure it is provided in main.ts.')
+    }
+    const response = await fetch(
+      `${backend_URL.value}/emails?term=${query.value}&from=${emails.value.length}`,
+    )
+    if (!response.ok) {
+      throw new Error(`Failed to fetch emails: ${response.statusText}`)
+    }
+    const jsonObj = await response.json()
+    if (jsonObj.success) {
       errorMessage.value = ''
       emails.value = jsonObj.data.emails
       hits.value = jsonObj.data.total

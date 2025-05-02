@@ -15,7 +15,7 @@ type Config struct {
 func LoadConfig() *Config {
 	port, err := strconv.ParseUint(os.Getenv("SERVER_PORT"), 10, 16)
 	if err != nil {
-		port = 3000
+		port = 3001
 	}
 
 	return &Config{
